@@ -1,11 +1,11 @@
 * { box-sizing: border-box; margin: 0; }
-body { font-family: "Segoe UI", system-ui, sans-serif; background: #1e1e2e; }
+body { font-family: "Segoe UI", system-ui, sans-serif; background: #1e1e2e; overflow: hidden; }
 #bar {
   display: flex;
   gap: 6px;
   padding: 10px;
   align-items: center;
-  height: 100vh;
+  height: 64px;
 }
 button.mon, button.refresh {
   border: 1px solid #45475a;
@@ -25,3 +25,15 @@ button.mon.active {
 button.mon:disabled { cursor: default; }
 button.refresh { padding: 8px; }
 button.mon:hover:not(:disabled), button.refresh:hover { border-color: #89b4fa; }
+
+#update { display: none; align-items: center; height: 32px; padding: 0 12px 8px; }
+#update.show { display: flex; }
+#update button {
+  border: none;
+  background: transparent;
+  color: #f9e2af;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+#update button:hover { text-decoration: underline; }
