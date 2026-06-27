@@ -1,8 +1,12 @@
 use windows::core::PCWSTR;
+use windows::Win32::Foundation::HWND;
 use windows::Win32::Graphics::Gdi::{
+    ChangeDisplaySettingsExW, CDS_NORESET, CDS_SET_PRIMARY, CDS_TYPE, CDS_UPDATEREGISTRY,
+    DISP_CHANGE_SUCCESSFUL, DM_POSITION,
     EnumDisplayDevicesW, EnumDisplaySettingsW, DISPLAY_DEVICEW, DISPLAY_DEVICE_ATTACHED_TO_DESKTOP,
     DISPLAY_DEVICE_PRIMARY_DEVICE, DEVMODEW, ENUM_CURRENT_SETTINGS,
 };
+use crate::layout::{compute_layout, MonitorGeom};
 
 #[derive(serde::Serialize, Clone, Debug)]
 pub struct Monitor {
@@ -63,4 +67,57 @@ pub fn enumerate() -> Vec<Monitor> {
         });
     }
     out
+}
+
+/// Make the monitor at `target` index the primary display.
+/// Standard 3-step sequence: stage each monitor's position with NORESET + UPDATEREGISTRY
+/// (the target also gets SET_PRIMARY at (0,0)), then a final NULL apply commits everything.
+pub fn set_primary(target: usize) -> Result<(), String> {
+    let monitors = enumerate();
+    if monitors.is_empty() {
+        return Err("未检测到显示器".into());
+    }
+    let geom: Vec<MonitorGeom> = monitors
+        .iter()
+        .map(|m| MonitorGeom { index: m.index, x: m.x, y: m.y, width: m.width, height: m.height })
+        .collect();
+    let placements = compute_layout(&geom, target)?;
+
+    for p in &placements {
+        let m = &monitors[p.index];
+        let name: Vec<u16> = m.device_name.encode_utf16().chain(std::iter::once(0)).collect();
+
+        // Re-read the current mode to preserve resolution/refresh; only change position.
+        let mut dm = DEVMODEW {
+            dmSize: std::mem::size_of::<DEVMODEW>() as u16,
+            ..Default::default()
+        };
+        unsafe {
+            let _ = EnumDisplaySettingsW(PCWSTR(name.as_ptr()), ENUM_CURRENT_SETTINGS, &mut dm);
+            dm.dmFields = DM_POSITION;
+            dm.Anonymous1.Anonymous2.dmPosition.x = p.x;
+            dm.Anonymous1.Anonymous2.dmPosition.y = p.y;
+        }
+
+        let mut flags = CDS_UPDATEREGISTRY | CDS_NORESET;
+        if p.is_primary {
+            flags |= CDS_SET_PRIMARY;
+        }
+
+        let res = unsafe {
+            ChangeDisplaySettingsExW(PCWSTR(name.as_ptr()), Some(&dm), HWND(std::ptr::null_mut()), flags, None)
+        };
+        if res != DISP_CHANGE_SUCCESSFUL {
+            return Err(format!("设置 {} 失败 (code {})", m.label, res.0));
+        }
+    }
+
+    // Final NULL call commits all staged changes at once.
+    let res = unsafe {
+        ChangeDisplaySettingsExW(PCWSTR::null(), None, HWND(std::ptr::null_mut()), CDS_TYPE(0), None)
+    };
+    if res != DISP_CHANGE_SUCCESSFUL {
+        return Err(format!("应用变更失败 (code {})", res.0));
+    }
+    Ok(())
 }
