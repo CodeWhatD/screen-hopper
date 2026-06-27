@@ -1,6 +1,6 @@
 import "./styles.css";
 import { invoke } from "@tauri-apps/api/core";
-import { getCurrentWindow, LogicalPosition } from "@tauri-apps/api/window";
+import { getCurrentWindow, PhysicalPosition } from "@tauri-apps/api/window";
 
 interface Monitor {
   index: number;
@@ -36,9 +36,18 @@ async function render() {
 async function switchTo(index: number) {
   try {
     await invoke("set_primary", { index });
-    // The new primary now sits at (0,0); move this window onto it so it stays
-    // visible in the single-screen remote viewer.
-    await getCurrentWindow().setPosition(new LogicalPosition(40, 40));
+    const w = getCurrentWindow();
+    // Windows shifts the desktop coordinate origin ASYNCHRONOUSLY after the
+    // display change. If we reposition immediately we land on the old layout
+    // and get carried off-screen with the old primary. Re-assert the position
+    // a few times across ~750ms so a later pass lands on the NEW primary
+    // (always at physical 0,0) once the coordinate system has settled.
+    // PhysicalPosition avoids cross-monitor DPI-scaling ambiguity.
+    for (let i = 0; i < 5; i++) {
+      await new Promise((r) => setTimeout(r, 150));
+      await w.setPosition(new PhysicalPosition(40, 40));
+    }
+    await w.setFocus();
     await render();
   } catch (e) {
     alert("切换失败: " + e);
