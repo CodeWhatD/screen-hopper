@@ -1,26 +1,37 @@
 # screen-hopper
 
-一个 Windows 小工具：可视化切换“主显示器”，让 toDesk / AnyDesk / RustDesk / 向日葵等
-**只串流一块屏**的远程软件，能查看被控电脑的任意一块显示器。
+**English** | [简体中文](./README.zh-CN.md)
 
-## 原理
-这些远程软件免费版通常只传“主显示器”。本工具调用 Win32 `ChangeDisplaySettingsEx`
-切换主显示器，远程画面随之切到对应屏。切换后工具窗口自动移到新主屏，始终可见可点。
+A tiny Windows utility that visually switches the **primary monitor**, so single-screen
+remote-desktop tools — toDesk / AnyDesk / RustDesk / Sunlogin — can view **any** monitor
+of the controlled PC.
 
-## 用法
-1. 把 `screen-hopper.exe` 拷到**被控电脑**（公司电脑）运行。
-2. 远程连上后，点小横条上的屏号按钮即可切换当前查看的屏；🔄 重新检测显示器。
+## Why
+The free tiers of these remote tools usually stream only the **primary** monitor.
+screen-hopper calls the Win32 `ChangeDisplaySettingsEx` API to switch which monitor is
+primary; the remote view follows. After switching, the tool window automatically moves
+onto the new primary so it stays visible and clickable in the remote viewer.
 
-## 依赖
-- Windows 10/11（自带 WebView2 运行时）。
+## Usage
+1. Copy `screen-hopper.exe` to the **controlled PC** (e.g. your office machine) and run it.
+2. Once connected remotely, click a screen button on the little bar to switch the screen
+   you're viewing. 🔄 re-detects monitors.
 
-## 开发
+Download the latest `screen-hopper.exe` from the
+[Releases page](https://github.com/CodeWhatD/screen-hopper/releases/latest).
+
+## Requirements
+- Windows 10/11 (ships with the WebView2 runtime).
+
+## Development
 ```bash
 npm install
-npm run tauri dev               # 开发运行
-npm run tauri build -- --no-bundle   # 打包出免安装 exe（src-tauri/target/release/screen-hopper.exe）
-cd src-tauri && cargo test      # 运行纯逻辑单元测试
+npm run tauri dev                    # run in dev mode
+npm run tauri build -- --no-bundle   # build the portable exe (src-tauri/target/release/screen-hopper.exe)
+cd src-tauri && cargo test           # run the pure-logic unit tests
 ```
 
-## 许可
+New to the codebase (or to Rust)? See the [Code Guide](./docs/CODE-GUIDE.md).
+
+## License
 MIT
