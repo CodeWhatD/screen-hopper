@@ -11,7 +11,8 @@
 
 ## 用法
 1. 把 `screen-hopper.exe` 拷到**被控电脑**（公司电脑）运行。
-2. 远程连上后，点小横条上的屏号按钮即可切换当前查看的屏；🔄 重新检测显示器。
+2. 远程连上后，点小横条上的屏号按钮即可切换当前查看的屏；也可以按**全局快捷键
+   `Ctrl+Alt+1 / 2 / 3 …`** 直接切到对应屏。🔄 重新检测显示器。
 
 到 [Releases 页面](https://github.com/CodeWhatD/screen-hopper/releases/latest) 下载最新的
 `screen-hopper.exe`。

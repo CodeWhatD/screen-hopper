@@ -15,7 +15,8 @@ onto the new primary so it stays visible and clickable in the remote viewer.
 ## Usage
 1. Copy `screen-hopper.exe` to the **controlled PC** (e.g. your office machine) and run it.
 2. Once connected remotely, click a screen button on the little bar to switch the screen
-   you're viewing. 🔄 re-detects monitors.
+   you're viewing — or press the **global hotkey `Ctrl+Alt+1 / 2 / 3 …`** to jump straight
+   to that screen. 🔄 re-detects monitors.
 
 Download the latest `screen-hopper.exe` from the
 [Releases page](https://github.com/CodeWhatD/screen-hopper/releases/latest).

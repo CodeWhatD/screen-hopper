@@ -2,6 +2,7 @@ import "./styles.css";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow, PhysicalPosition, LogicalSize } from "@tauri-apps/api/window";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { register, unregisterAll } from "@tauri-apps/plugin-global-shortcut";
 
 interface Monitor {
   index: number;
@@ -24,9 +25,11 @@ async function render() {
   bar.innerHTML = "";
   for (const m of monitors) {
     const btn = document.createElement("button");
-    btn.textContent = `${m.label} ${m.width}×${m.height}`;
     btn.className = m.is_primary ? "mon active" : "mon";
     btn.disabled = m.is_primary;
+    // Main label + a small hotkey hint (Ctrl+Alt+N). Resolution moves to the tooltip.
+    btn.innerHTML = `<span>${m.label}</span><span class="hk">Ctrl+Alt+${m.index + 1}</span>`;
+    btn.title = `${m.width}×${m.height}`;
     btn.addEventListener("click", () => switchTo(m.index));
     bar.appendChild(btn);
   }
@@ -38,6 +41,24 @@ async function render() {
     checkUpdate();
   });
   bar.appendChild(refresh);
+
+  await registerHotkeys(monitors);
+}
+
+/** Register Ctrl+Alt+N global hotkeys, one per monitor (N = screen number).
+ *  Re-registered on every render so it stays in sync after re-detecting monitors. */
+async function registerHotkeys(monitors: Monitor[]) {
+  try {
+    await unregisterAll();
+    for (const m of monitors) {
+      const accel = `Control+Alt+${m.index + 1}`;
+      await register(accel, (event) => {
+        if (event.state === "Pressed") switchTo(m.index);
+      });
+    }
+  } catch {
+    // 某个组合被别的程序占用就跳过，不影响鼠标点击切换
+  }
 }
 
 async function switchTo(index: number) {
